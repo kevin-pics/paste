@@ -764,7 +764,7 @@ export default function App() {
               <div className="bg-blue-50 p-6 rounded-full mb-4 text-blue-500">
                 <FileText size={32} />
               </div>
-              <h3 className="text-lg font-bold text-gray-800">Paste or drop anything here.</h3>
+              <h3 className="text-lg font-bold text-gray-800 truncate">Add any text or file</h3>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
