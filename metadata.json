@@ -1,0 +1,6 @@
+{
+  "name": "Paste",
+  "description": "A real-time shared clipboard for effortless text syncing between computers and mobile devices via QR code.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
