@@ -281,8 +281,8 @@ export default function App() {
         return;
       }
 
-      const pastedText = e.clipboardData?.getData('text/plain');
-      if (pastedText && pastedText.trim()) {
+      const pastedText = e.clipboardData?.getData('text/plain')?.trim();
+      if (pastedText) {
         e.preventDefault();
         setActiveTab(prev => prev === 'files' ? 'all' : prev);
 
@@ -462,9 +462,8 @@ export default function App() {
 
   const handleAddTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!manualText.trim()) return;
-
-    const textToSubmit = manualText;
+    const textToSubmit = manualText.trim();
+    if (!textToSubmit) return;
 
     // Check locally before creating a temp card
     const existingLocal = clips.find(c => c.content === textToSubmit);
