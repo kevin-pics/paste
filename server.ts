@@ -64,7 +64,7 @@ async function startServer() {
     next();
   });
 
-  const PORT = 3000;
+  const PORT = parseInt(process.env.PORT || '3000', 10);
 
   // Middleware to ensure all /api requests have correct content-type and don't fall through
   app.use("/api", (req, res, next) => {
