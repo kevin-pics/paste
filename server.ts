@@ -87,9 +87,9 @@ async function startServer() {
 
   app.post(["/api/clips/:roomId", "/api/clips/:roomId/"], (req, res) => {
     const { roomId } = req.params;
-    const { content } = req.body;
+    const content = req.body.content?.trim();
     
-    if (!content || !content.trim()) {
+    if (!content) {
       return res.status(400).json({ error: "Content is required" });
     }
 
