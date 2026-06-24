@@ -779,7 +779,7 @@ export default function App() {
                         key={`text_${clip.clientKey || clip.id}`}
                         onClick={() => {
                           if (clip.status === 'syncing') return;
-                          navigator.clipboard.writeText(clip.content);
+                          navigator.clipboard.writeText(clip.content.trim());
                           showToast('Text copied to clipboard!');
                         }}
                         className={`border rounded-2xl overflow-hidden transition-all duration-200 relative flex flex-col justify-between group h-56 ${
