@@ -765,7 +765,7 @@ export default function App() {
                 <FileText size={32} />
               </div>
               <h3 className="text-lg font-bold text-gray-800">
-                <span className="md:hidden">Add any text or file</span>
+                <span className="md:hidden">Add any text or file.</span>
                 <span className="hidden md:inline">Paste or drop anything here.</span>
               </h3>
             </div>
