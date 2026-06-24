@@ -717,29 +717,28 @@ export default function App() {
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               onClick={() => setIsAddTextOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap"
+              className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors"
+              title="Add Text"
             >
-              <Plus size={14} />
-              <span>Add Text</span>
+              <Plus size={16} />
             </button>
 
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50 whitespace-nowrap"
+              className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors disabled:opacity-50"
+              title={isUploading ? 'Uploading...' : 'Upload File'}
             >
-              <UploadCloud size={14} />
-              <span>{isUploading ? 'Uploading...' : 'Upload File'}</span>
+              <UploadCloud size={16} />
             </button>
 
             {(clips.length > 0 || files.length > 0) && (
               <button
                 onClick={() => setIsClearConfirmOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-red-600 rounded-xl text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap"
-                title="Clear all items in this room"
+                className="p-2 bg-gray-100 hover:bg-gray-200 text-red-500 rounded-xl cursor-pointer transition-colors"
+                title="Clear All"
               >
-                <Trash2 size={14} />
-                <span>Clear All</span>
+                <Trash2 size={16} />
               </button>
             )}
 
