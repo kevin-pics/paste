@@ -716,7 +716,7 @@ export default function App() {
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               onClick={() => setIsAddTextOpen(true)}
-              className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors"
+              className="md:hidden p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors"
               title="Add Text"
             >
               <Plus size={16} />
@@ -725,7 +725,7 @@ export default function App() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors disabled:opacity-50"
+              className="md:hidden p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors disabled:opacity-50"
               title={isUploading ? 'Uploading...' : 'Upload File'}
             >
               <UploadCloud size={16} />
