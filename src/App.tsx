@@ -734,10 +734,11 @@ export default function App() {
             {(clips.length > 0 || files.length > 0) && (
               <button
                 onClick={() => setIsClearConfirmOpen(true)}
-                className="p-2 bg-gray-100 hover:bg-gray-200 text-red-500 rounded-xl cursor-pointer transition-colors"
+                className="flex items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-red-500 rounded-xl cursor-pointer transition-colors"
                 title="Clear All"
               >
                 <Trash2 size={16} />
+                <span className="hidden md:inline text-sm">Clean all</span>
               </button>
             )}
 
