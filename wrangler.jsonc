@@ -11,7 +11,7 @@
   // For local dev, any 32-char hex string works. For production, replace id with the output of:
   // `wrangler kv namespace create CLIPS`
   "kv_namespaces": [
-    { "binding": "CLIPS", "id": "00000000000000000000000000000000" }
+    { "binding": "CLIPS", "id": "8e5329d813f44604997e00df3f543d7f" }
   ],
   // Run `wrangler r2 bucket create paste-files` once before deploying.
   "r2_buckets": [
