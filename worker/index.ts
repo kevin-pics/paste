@@ -80,11 +80,12 @@ async function handleFilesPost(env: Env, roomId: string, req: Request): Promise<
   for (const file of fileEntries) {
     const id = `${Date.now()}-${safeFileName(file.name)}`;
     const key = `${roomId}/${id}`;
-    await env.FILES.put(key, file.stream(), {
+    const buffer = await file.arrayBuffer();
+    await env.FILES.put(key, buffer, {
       httpMetadata: { contentType: file.type || "application/octet-stream" },
       customMetadata: { name: file.name },
     });
-    results.push({ id, name: file.name, size: file.size, uploadedAt: Date.now() });
+    results.push({ id, name: file.name, size: buffer.byteLength, uploadedAt: Date.now() });
   }
   return json(results);
 }
@@ -102,20 +103,84 @@ async function handleFilesGet(env: Env, roomId: string): Promise<Response> {
   return json(files);
 }
 
-async function handleFileDownload(env: Env, roomId: string, fileId: string): Promise<Response> {
+function parseRange(header: string | null): R2Range | null {
+  if (!header?.startsWith("bytes=")) return null;
+  const spec = header.slice(6).split(",")[0].trim();
+  const i = spec.indexOf("-");
+  if (i < 0) return null;
+  const s = spec.slice(0, i).trim();
+  const e = spec.slice(i + 1).trim();
+  if (s === "") {
+    const n = parseInt(e, 10);
+    return isNaN(n) || n <= 0 ? null : { suffix: n };
+  }
+  const start = parseInt(s, 10);
+  if (isNaN(start)) return null;
+  if (e === "") return { offset: start };
+  const end = parseInt(e, 10);
+  if (isNaN(end) || end < start) return null;
+  return { offset: start, length: end - start + 1 };
+}
+
+function buildDownloadHeaders(
+  obj: R2Object | R2ObjectBody,
+  originalName: string,
+  total: number
+): Headers {
+  const encoded = encodeURIComponent(originalName);
+  const headers = new Headers({
+    "Content-Type": obj.httpMetadata?.contentType ?? "application/octet-stream",
+    "Content-Disposition": `attachment; filename="${safeFileName(originalName)}"; filename*=UTF-8''${encoded}`,
+    "Accept-Ranges": "bytes",
+    "Cache-Control": "no-store, no-transform",
+    "ETag": obj.httpEtag,
+  });
+  return headers;
+}
+
+async function handleFileDownload(
+  env: Env,
+  roomId: string,
+  fileId: string,
+  request: Request,
+  isHead: boolean
+): Promise<Response> {
   const key = `${roomId}/${fileId}`;
-  const object = await env.FILES.get(key);
+
+  if (isHead) {
+    const head = await env.FILES.head(key);
+    if (!head) return new Response(null, { status: 404 });
+    const originalName = head.customMetadata?.name ?? fileId.replace(/^\d+-/, "");
+    const headers = buildDownloadHeaders(head, originalName, head.size);
+    headers.set("Content-Length", String(head.size));
+    return new Response(null, { status: 200, headers });
+  }
+
+  const r2range = parseRange(request.headers.get("range"));
+  const object = await env.FILES.get(key, r2range ? { range: r2range } : undefined);
   if (!object) return new Response("File not found", { status: 404 });
 
+  const total = object.size;
   const originalName = object.customMetadata?.name ?? fileId.replace(/^\d+-/, "");
-  const encoded = encodeURIComponent(originalName);
-  return new Response(object.body, {
-    headers: {
-      "Content-Type": object.httpMetadata?.contentType ?? "application/octet-stream",
-      "Content-Disposition": `attachment; filename="${safeFileName(originalName)}"; filename*=UTF-8''${encoded}`,
-      "Cache-Control": "no-store",
-    },
-  });
+  const headers = buildDownloadHeaders(object, originalName, total);
+
+  if (r2range && object.range) {
+    let start: number, len: number;
+    if ("suffix" in object.range) {
+      len = (object.range as { suffix: number }).suffix;
+      start = total - len;
+    } else {
+      const r = object.range as { offset?: number; length?: number };
+      start = r.offset ?? 0;
+      len = r.length ?? total - start;
+    }
+    headers.set("Content-Range", `bytes ${start}-${start + len - 1}/${total}`);
+    headers.set("Content-Length", String(len));
+    return new Response(object.body, { status: 206, headers });
+  }
+
+  headers.set("Content-Length", String(total));
+  return new Response(object.body, { status: 200, headers });
 }
 
 async function handleFileDelete(env: Env, roomId: string, fileId: string): Promise<Response> {
@@ -166,7 +231,7 @@ export default {
       if (resource === "files" && param2) {
         if (method === "POST" && !param3) return handleFilesPost(env, param2, request);
         if (method === "GET" && !param3) return handleFilesGet(env, param2);
-        if (method === "GET" && param3) return handleFileDownload(env, param2, param3);
+        if ((method === "GET" || method === "HEAD") && param3) return handleFileDownload(env, param2, param3, request, method === "HEAD");
         if (method === "DELETE" && param3) return handleFileDelete(env, param2, param3);
       }
 
