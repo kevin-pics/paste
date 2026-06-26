@@ -1,0 +1,20 @@
+{
+  "name": "paste",
+  "main": "worker/index.ts",
+  "compatibility_date": "2025-06-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  // Run `wrangler kv namespace create CLIPS` and paste the returned id below.
+  // For local dev, any 32-char hex string works. For production, replace id with the output of:
+  // `wrangler kv namespace create CLIPS`
+  "kv_namespaces": [
+    { "binding": "CLIPS", "id": "00000000000000000000000000000000" }
+  ],
+  // Run `wrangler r2 bucket create paste-files` once before deploying.
+  "r2_buckets": [
+    { "binding": "FILES", "bucket_name": "paste-files" }
+  ]
+}
