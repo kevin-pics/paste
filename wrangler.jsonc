@@ -8,14 +8,11 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
-  // Run `wrangler kv namespace create CLIPS` and paste the returned id below.
-  // For local dev, any 32-char hex string works. For production, replace id with the output of:
-  // `wrangler kv namespace create CLIPS`
-  "kv_namespaces": [
-    { "binding": "CLIPS", "id": "8e5329d813f44604997e00df3f543d7f" }
-  ],
   // Run `wrangler r2 bucket create paste-files` once before deploying.
   "r2_buckets": [
     { "binding": "FILES", "bucket_name": "paste-files" }
+  ],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "paste-clips", "database_id": "b78a12a1-369e-486b-8869-81159a1fd395" }
   ]
 }

@@ -1,6 +1,6 @@
 export interface Env {
   ASSETS: Fetcher;
-  CLIPS: KVNamespace;
+  DB: D1Database;
   FILES: R2Bucket;
 }
 
@@ -20,7 +20,10 @@ interface FileEntry {
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+    },
   });
 }
 
@@ -28,17 +31,11 @@ function safeFileName(name: string): string {
   return name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
 }
 
-async function getClips(env: Env, roomId: string): Promise<TextClip[]> {
-  const raw = await env.CLIPS.get(roomId);
-  return raw ? (JSON.parse(raw) as TextClip[]) : [];
-}
-
-async function putClips(env: Env, roomId: string, clips: TextClip[]): Promise<void> {
-  await env.CLIPS.put(roomId, JSON.stringify(clips));
-}
-
 async function handleClipsGet(env: Env, roomId: string): Promise<Response> {
-  return json(await getClips(env, roomId));
+  const { results } = await env.DB.prepare(
+    "SELECT id, content, updated_at as updatedAt FROM clips WHERE room_id = ? ORDER BY updated_at ASC"
+  ).bind(roomId).all<TextClip>();
+  return json(results);
 }
 
 async function handleClipsPost(env: Env, roomId: string, req: Request): Promise<Response> {
@@ -46,29 +43,31 @@ async function handleClipsPost(env: Env, roomId: string, req: Request): Promise<
   const content = body.content?.trim();
   if (!content) return json({ error: "Content is required" }, 400);
 
-  const clips = await getClips(env, roomId);
-  const existing = clips.find((c) => c.content === content);
+  const existing = await env.DB.prepare(
+    "SELECT id, content, updated_at as updatedAt FROM clips WHERE room_id = ? AND content = ?"
+  ).bind(roomId, content).first<TextClip>();
+
   if (existing) {
-    existing.updatedAt = Date.now();
-    await putClips(env, roomId, clips);
-    return json({ ...existing, isDuplicate: true });
+    const updatedAt = Date.now();
+    await env.DB.prepare(
+      "UPDATE clips SET updated_at = ? WHERE id = ?"
+    ).bind(updatedAt, existing.id).run();
+    return json({ ...existing, updatedAt, isDuplicate: true });
   }
 
-  const newClip: TextClip = {
-    id: `clip-${Date.now()}-${crypto.randomUUID().slice(0, 7)}`,
-    content,
-    updatedAt: Date.now(),
-  };
-  clips.push(newClip);
-  await putClips(env, roomId, clips);
-  return json(newClip);
+  const id = `clip-${Date.now()}-${crypto.randomUUID().slice(0, 7)}`;
+  const updatedAt = Date.now();
+  await env.DB.prepare(
+    "INSERT INTO clips (id, room_id, content, updated_at) VALUES (?, ?, ?, ?)"
+  ).bind(id, roomId, content, updatedAt).run();
+  return json({ id, content, updatedAt });
 }
 
 async function handleClipsDelete(env: Env, roomId: string, clipId: string): Promise<Response> {
-  const clips = await getClips(env, roomId);
-  const filtered = clips.filter((c) => c.id !== clipId);
-  if (filtered.length === clips.length) return json({ error: "Clip not found" }, 404);
-  await putClips(env, roomId, filtered);
+  const result = await env.DB.prepare(
+    "DELETE FROM clips WHERE id = ? AND room_id = ?"
+  ).bind(clipId, roomId).run();
+  if (result.meta.changes === 0) return json({ error: "Clip not found" }, 404);
   return json({ success: true });
 }
 
@@ -114,6 +113,7 @@ async function handleFileDownload(env: Env, roomId: string, fileId: string): Pro
     headers: {
       "Content-Type": object.httpMetadata?.contentType ?? "application/octet-stream",
       "Content-Disposition": `attachment; filename="${safeFileName(originalName)}"; filename*=UTF-8''${encoded}`,
+      "Cache-Control": "no-store",
     },
   });
 }
@@ -124,7 +124,7 @@ async function handleFileDelete(env: Env, roomId: string, fileId: string): Promi
 }
 
 async function handleClear(env: Env, roomId: string): Promise<Response> {
-  await env.CLIPS.delete(roomId);
+  await env.DB.prepare("DELETE FROM clips WHERE room_id = ?").bind(roomId).run();
 
   const prefix = `${roomId}/`;
   let cursor: string | undefined;
@@ -147,10 +147,9 @@ export default {
     }
 
     const segments = path.replace(/\/$/, "").split("/").filter(Boolean);
-    // segments[0] = "api", segments[1] = resource, segments[2] = roomId, etc.
     const resource = segments[1];
-    const param2 = segments[2]; // roomId or undefined
-    const param3 = segments[3]; // clipId / fileId or undefined
+    const param2 = segments[2];
+    const param3 = segments[3];
     const method = request.method;
 
     try {
