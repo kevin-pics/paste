@@ -20,7 +20,7 @@ import {
   X,
   File,
   Plus,
-  ClipboardPaste
+  ClipboardCopy
 } from 'lucide-react';
 
 interface SharedFile {
@@ -797,6 +797,15 @@ export default function App() {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {/* Paste: mobile only */}
+            <button
+              onClick={pasteFromClipboard}
+              className="md:hidden p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors"
+              title="Paste from clipboard"
+            >
+              <ClipboardCopy size={16} />
+            </button>
+
             {/* Upload: mobile only */}
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -805,15 +814,6 @@ export default function App() {
               title={isUploading ? 'Uploading...' : 'Upload File'}
             >
               <UploadCloud size={16} />
-            </button>
-
-            {/* Paste: mobile only */}
-            <button
-              onClick={pasteFromClipboard}
-              className="md:hidden p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors"
-              title="Paste from clipboard"
-            >
-              <ClipboardPaste size={16} />
             </button>
 
             {(clips.length > 0 || files.length > 0) && (
