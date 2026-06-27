@@ -19,7 +19,8 @@ import {
   Download,
   X,
   File,
-  Plus
+  Plus,
+  ClipboardPaste
 } from 'lucide-react';
 
 interface SharedFile {
@@ -411,6 +412,88 @@ export default function App() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const pasteFromClipboard = async () => {
+    try {
+      if (navigator.clipboard?.read) {
+        const items = await navigator.clipboard.read();
+        const fileBlobs: File[] = [];
+        for (const item of items) {
+          for (const type of item.types) {
+            if (type !== 'text/plain' && type !== 'text/html') {
+              const blob = await item.getType(type);
+              const ext = type.split('/')[1] || 'bin';
+              fileBlobs.push(new File([blob], `pasted.${ext}`, { type }));
+            }
+          }
+        }
+        if (fileBlobs.length > 0) {
+          await uploadFilesDirectly(fileBlobs);
+          setActiveTab(prev => prev === 'text' ? 'all' : prev);
+          return;
+        }
+      }
+      const text = await navigator.clipboard.readText();
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      setActiveTab(prev => prev === 'files' ? 'all' : prev);
+      const existingLocal = clipsRef.current.find(c => c.content === trimmed);
+      if (existingLocal) {
+        const now = Date.now();
+        setClips(prev => {
+          const filtered = prev.filter(c => c.id !== existingLocal.id);
+          return [{ ...existingLocal, updatedAt: now }, ...filtered];
+        });
+        fetch(`/api/clips/${roomId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: trimmed }),
+        }).catch(() => {});
+        showToast('Already exists!');
+        return;
+      }
+      const now = Date.now();
+      const tempId = `temp_${now}`;
+      const tempClip: TextClip = { id: tempId, clientKey: tempId, content: trimmed, updatedAt: now, status: 'syncing' };
+      setClips(prev => [tempClip, ...prev]);
+      try {
+        const response = await fetch(`/api/clips/${roomId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: trimmed }),
+        });
+        if (response.ok) {
+          const newClip = await response.json();
+          const syncedClip = { ...newClip, clientKey: tempId, status: 'synced' as const };
+          if (newClip.isDuplicate) {
+            setClips(prev => {
+              const filtered = prev.filter(c => c.id !== tempId && c.id !== syncedClip.id);
+              return [syncedClip, ...filtered];
+            });
+            showToast('Already exists!');
+          } else {
+            setClips(prev => {
+              const filtered = prev.filter(c => c.id !== tempId);
+              return [syncedClip, ...filtered];
+            });
+            setTimeout(() => {
+              setClips(prev => prev.map(c => {
+                if (c.id === syncedClip.id) { const { status, ...rest } = c; return rest; }
+                return c;
+              }));
+            }, 2000);
+            showToast('Text card added!');
+          }
+        } else {
+          setClips(prev => prev.filter(c => c.id !== tempId));
+        }
+      } catch {
+        setClips(prev => prev.filter(c => c.id !== tempId));
+      }
+    } catch {
+      showToast('Cannot access clipboard');
+    }
+  };
+
   const handleFileDelete = async (fileId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
@@ -714,31 +797,45 @@ export default function App() {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              onClick={() => setIsAddTextOpen(true)}
-              className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors"
-              title="Add Text"
-            >
-              <Plus size={16} />
-            </button>
-
+            {/* Upload: mobile only */}
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors disabled:opacity-50"
+              className="md:hidden p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors disabled:opacity-50"
               title={isUploading ? 'Uploading...' : 'Upload File'}
             >
               <UploadCloud size={16} />
             </button>
 
+            {/* Paste: mobile only */}
+            <button
+              onClick={pasteFromClipboard}
+              className="md:hidden p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors"
+              title="Paste from clipboard"
+            >
+              <ClipboardPaste size={16} />
+            </button>
+
             {(clips.length > 0 || files.length > 0) && (
-              <button
-                onClick={() => setIsClearConfirmOpen(true)}
-                className="p-2 bg-gray-100 hover:bg-gray-200 text-red-500 rounded-xl cursor-pointer transition-colors"
-                title="Clear All"
-              >
-                <Trash2 size={16} />
-              </button>
+              <>
+                {/* Clear All: mobile icon only */}
+                <button
+                  onClick={() => setIsClearConfirmOpen(true)}
+                  className="md:hidden p-2 bg-gray-100 hover:bg-gray-200 text-red-500 rounded-xl cursor-pointer transition-colors"
+                  title="Clear All"
+                >
+                  <Trash2 size={16} />
+                </button>
+                {/* Clear All: desktop icon + text */}
+                <button
+                  onClick={() => setIsClearConfirmOpen(true)}
+                  className="hidden md:flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-red-500 rounded-xl cursor-pointer transition-colors text-sm font-medium"
+                  title="Clear All"
+                >
+                  <Trash2 size={14} />
+                  Clear all
+                </button>
+              </>
             )}
 
             <input 
