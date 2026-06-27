@@ -800,31 +800,34 @@ export default function App() {
             {/* Paste: mobile only */}
             <button
               onClick={pasteFromClipboard}
-              className="md:hidden p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors"
+              className="md:hidden flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors text-sm font-medium"
               title="Paste from clipboard"
             >
-              <ClipboardCopy size={16} />
+              <ClipboardCopy size={14} />
+              Paste
             </button>
 
             {/* Upload: mobile only */}
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="md:hidden p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors disabled:opacity-50"
+              className="md:hidden flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors disabled:opacity-50 text-sm font-medium"
               title={isUploading ? 'Uploading...' : 'Upload File'}
             >
-              <UploadCloud size={16} />
+              <UploadCloud size={14} />
+              Upload
             </button>
 
             {(clips.length > 0 || files.length > 0) && (
               <>
-                {/* Clear All: mobile icon only */}
+                {/* Clear All: mobile icon + text */}
                 <button
                   onClick={() => setIsClearConfirmOpen(true)}
-                  className="md:hidden p-2 bg-gray-100 hover:bg-gray-200 text-red-500 rounded-xl cursor-pointer transition-colors"
+                  className="md:hidden flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-red-500 rounded-xl cursor-pointer transition-colors text-sm font-medium"
                   title="Clear All"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={14} />
+                  Clear
                 </button>
                 {/* Clear All: desktop icon + text */}
                 <button
