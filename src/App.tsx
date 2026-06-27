@@ -800,7 +800,7 @@ export default function App() {
             {/* Paste: mobile only */}
             <button
               onClick={pasteFromClipboard}
-              className="md:hidden flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors text-sm font-medium"
+              className="md:hidden flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg sm:rounded-xl cursor-pointer transition-colors text-xs sm:text-sm font-medium"
               title="Paste from clipboard"
             >
               <ClipboardCopy size={14} />
@@ -811,7 +811,7 @@ export default function App() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="md:hidden flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer transition-colors disabled:opacity-50 text-sm font-medium"
+              className="md:hidden flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg sm:rounded-xl cursor-pointer transition-colors disabled:opacity-50 text-xs sm:text-sm font-medium"
               title={isUploading ? 'Uploading...' : 'Upload File'}
             >
               <UploadCloud size={14} />
@@ -823,11 +823,11 @@ export default function App() {
                 {/* Clear All: mobile icon + text */}
                 <button
                   onClick={() => setIsClearConfirmOpen(true)}
-                  className="md:hidden flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-red-500 rounded-xl cursor-pointer transition-colors text-sm font-medium"
+                  className="md:hidden flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-2 bg-white border border-red-200 hover:bg-red-50 text-red-600 rounded-lg sm:rounded-xl cursor-pointer transition-colors text-xs sm:text-sm font-medium"
                   title="Clear All"
                 >
                   <Trash2 size={14} />
-                  Clear
+                  Clear all
                 </button>
                 {/* Clear All: desktop icon + text */}
                 <button
