@@ -20,7 +20,7 @@ import {
   X,
   File,
   Plus,
-  ClipboardCopy
+  ClipboardPlus
 } from 'lucide-react';
 
 interface SharedFile {
@@ -803,7 +803,7 @@ export default function App() {
               className="md:hidden flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg sm:rounded-xl cursor-pointer transition-colors text-xs sm:text-sm font-medium"
               title="Paste from clipboard"
             >
-              <ClipboardCopy size={14} />
+              <ClipboardPlus size={14} />
               Paste
             </button>
 
